@@ -1,0 +1,26 @@
+# proactive-bench configuration (non-secret).
+# Secrets live in .env only.
+
+scenarios_dir: scenarios
+results_dir: results
+
+agent:
+  max_inspect_rounds: 5
+  max_output_attempts: 3
+  temperature: 0.0
+
+judge:
+  temperature: 0.0
+  max_output_attempts: 3
+
+runner:
+  max_workers: 4
+  # Models evaluated as agents (must match ids on your endpoint).
+  agent_models:
+    - rag
+    - auto/best-fast
+  # Judge model id (or leave null to use JUDGE_MODEL from env).
+  judge_model: null
+
+report:
+  title: "proactive-bench results"
