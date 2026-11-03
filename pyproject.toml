@@ -27,7 +27,7 @@ dev = [
 proactive-bench = "proactive_bench.cli:main"
 
 [project.urls]
-Repository = "https://github.com/harshitsinha1024/proactive-bench"
+Repository = "https://github.com/anc1en7/proactive-bench"
 
 [tool.setuptools.packages.find]
 where = ["src"]
