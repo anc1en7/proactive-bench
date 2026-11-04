@@ -22,6 +22,9 @@ htmlcov/
 results/
 *.log
 
+# Agent execution workspace (superpowers SDD ledger/briefs)
+.superpowers/
+
 # Editors / OS
 .vscode/
 .idea/
