@@ -5,7 +5,7 @@
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Status: Phase 0](https://img.shields.io/badge/status-phase%200-yellow)
+![Status: Phase 1](https://img.shields.io/badge/status-phase%201-yellow)
 ![tests](https://img.shields.io/badge/tests-pytest-informational)
 
 ---
@@ -95,8 +95,8 @@ proactive-bench report      # HTML + summary (Phase 8)
 
 | Phase | Deliverable | Status |
 |------:|-------------|--------|
-| 0 | Scaffold · lint · tests · CI · README | ✅ **current** |
-| 1 | LLM client + mocked tests | ⬜ |
+| 0 | Scaffold · lint · tests · CI · README | ✅ |
+| 1 | LLM client + mocked tests | ✅ **current** |
 | 2 | Simulated apps + parser + L0–L3 | ⬜ |
 | 3 | Scenarios (5 workspaces → ~30) | ⬜ |
 | 4 | Multi-round agent loop | ⬜ |

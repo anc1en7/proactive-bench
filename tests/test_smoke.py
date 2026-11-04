@@ -27,3 +27,21 @@ def test_parser_accepts_all_phase0_commands() -> None:
     for cmd in ("validate", "run", "report", "smoke"):
         args = parser.parse_args([cmd])
         assert args.command == cmd
+
+
+def test_llm_public_api() -> None:
+    from proactive_bench import llm
+
+    for name in (
+        "LLMConfigError",
+        "LLMSettings",
+        "OpenAICompatClient",
+        "RateLimitError",
+        "settings_from_env",
+        "JSONExtractError",
+        "JsonChatResult",
+        "chat_json",
+        "extract_json_text",
+        "parse_json_text",
+    ):
+        assert hasattr(llm, name), name
