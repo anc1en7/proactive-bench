@@ -142,13 +142,20 @@ def test_next_id_skips_non_matching_prefix() -> None:
     assert next_id(items, "e") == "e3"
 
 
+def test_next_id_with_empty_prefix() -> None:
+    items = [{"id": "1"}, {"id": "4"}, {"id": "x"}]
+    assert next_id(items, "") == "5"
+
+
 def test_as_int_accepts_int_and_digit_string() -> None:
     assert as_int(7, "number") == 7
     assert as_int("7", "number") == 7
+    assert as_int("-7", "number") == -7
+    assert as_int(" 7 ", "number") == 7
 
 
 def test_as_int_rejects_garbage() -> None:
-    for bad in (None, 1.5, True, "abc", [1]):
+    for bad in (None, 1.5, True, "abc", [1], "--7", "²"):
         with pytest.raises(InvalidCommandError):
             as_int(bad, "number")
 ```
@@ -240,8 +247,10 @@ def as_int(value: Any, name: str) -> int:
         raise InvalidCommandError(f"{name} must be an integer, got {value!r}")
     if isinstance(value, int):
         return value
-    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
-        return int(value)
+    if isinstance(value, str):
+        s = value.strip()
+        if s.removeprefix("-").isdecimal():
+            return int(s)
     raise InvalidCommandError(f"{name} must be an integer, got {value!r}")
 ```
 
