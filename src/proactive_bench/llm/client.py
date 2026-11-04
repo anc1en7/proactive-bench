@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 import httpx
 
@@ -84,3 +87,61 @@ def settings_from_env() -> LLMSettings:
         model=model,
         timeout=_parse_timeout(os.getenv(ENV_TIMEOUT)),
     )
+
+
+class OpenAICompatClient:
+    """Minimal chat-completions client for an OpenAI-compatible endpoint."""
+
+    def __init__(
+        self,
+        settings: LLMSettings,
+        *,
+        transport: httpx.BaseTransport | None = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        backoff_base: float = DEFAULT_BACKOFF_BASE,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        self.settings = settings
+        self.max_retries = max_retries
+        self.backoff_base = backoff_base
+        self._sleep = sleep
+        self._client = httpx.Client(
+            base_url=settings.base_url,
+            headers={"Authorization": f"Bearer {settings.api_key}"},
+            timeout=settings.timeout,
+            transport=transport,
+        )
+
+    def models(self) -> list[str]:
+        response = self._client.get("/models")
+        response.raise_for_status()
+        payload: dict[str, Any] = response.json()
+        return [str(item["id"]) for item in payload.get("data", [])]
+
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        model: str | None = None,
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+    ) -> str:
+        body = {
+            "model": model or self.settings.model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        response = self._client.post("/chat/completions", json=body)
+        response.raise_for_status()
+        payload: dict[str, Any] = response.json()
+        return str(payload["choices"][0]["message"]["content"])
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self) -> OpenAICompatClient:
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()

@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Callable
+from typing import Any
+
+import httpx
 import pytest
 
-from proactive_bench.llm.client import LLMConfigError, settings_from_env
+from proactive_bench.llm.client import (
+    LLMConfigError,
+    LLMSettings,
+    OpenAICompatClient,
+    settings_from_env,
+)
 
 _ENV_KEYS = ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "LLM_TIMEOUT")
 
@@ -14,6 +24,19 @@ def _clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None, raising=False)
     for key in _ENV_KEYS:
         monkeypatch.delenv(key, raising=False)
+
+
+def make_client(
+    handler: Callable[[httpx.Request], httpx.Response],
+    **kwargs: Any,
+) -> OpenAICompatClient:
+    settings = LLMSettings(base_url="https://llm.test/v1", api_key="sk-test", model="m1")
+    kwargs.setdefault("sleep", lambda _seconds: None)
+    return OpenAICompatClient(settings, transport=httpx.MockTransport(handler), **kwargs)
+
+
+def ok_reply(content: str = "ok") -> httpx.Response:
+    return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
 
 
 # --- Task 1: settings & env loading ---------------------------------------
@@ -58,3 +81,54 @@ def test_settings_timeout_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_TIMEOUT", "not-a-number")
     with pytest.raises(LLMConfigError):
         settings_from_env()
+
+
+# --- Task 2: chat client core ---------------------------------------------
+
+
+def test_chat_returns_content() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/chat/completions"
+        return ok_reply("hello")
+
+    client = make_client(handler)
+    assert client.chat([{"role": "user", "content": "hi"}]) == "hello"
+
+
+def test_chat_sends_model_auth_and_params() -> None:
+    captured: dict[str, Any] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["auth"] = request.headers["authorization"]
+        captured["body"] = json.loads(request.content)
+        return ok_reply()
+
+    client = make_client(handler)
+    client.chat(
+        [{"role": "user", "content": "hi"}],
+        model="override-model",
+        temperature=0.0,
+        max_tokens=64,
+    )
+    body = captured["body"]
+    assert captured["auth"] == "Bearer sk-test"
+    assert body["model"] == "override-model"
+    assert body["temperature"] == 0.0
+    assert body["max_tokens"] == 64
+
+
+def test_models_lists_ids() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/models"
+        return httpx.Response(200, json={"data": [{"id": "rag"}, {"id": "aug/haiku4.5"}]})
+
+    client = make_client(handler)
+    assert client.models() == ["rag", "aug/haiku4.5"]
+
+
+def test_context_manager() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return ok_reply()
+
+    with make_client(handler) as client:
+        assert client.chat([{"role": "user", "content": "hi"}]) == "ok"
