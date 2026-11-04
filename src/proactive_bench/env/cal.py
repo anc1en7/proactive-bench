@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Any
 
 from proactive_bench.env.base import (
@@ -86,14 +86,16 @@ def _get_free_slots(state: dict[str, Any], params: dict[str, Any]) -> dict[str, 
     if not isinstance(date, str):
         raise InvalidCommandError(f"date must be YYYY-MM-DD, got {date!r}")
     try:
-        datetime.strptime(date, "%Y-%m-%d")
+        day = datetime.strptime(date, "%Y-%m-%d").date()
     except ValueError as exc:
         raise InvalidCommandError(f"date must be YYYY-MM-DD, got {date!r}") from exc
     duration = as_int(params.get("duration_minutes", 60), "duration_minutes")
     if duration <= 0:
         raise InvalidCommandError(f"duration_minutes must be positive, got {duration}")
-    day_start = datetime.fromisoformat(f"{date}T{_WORKDAY_START_HOUR:02d}:00:00+00:00")
-    day_end = datetime.fromisoformat(f"{date}T{_WORKDAY_END_HOUR:02d}:00:00+00:00")
+    if duration > 1440:
+        raise InvalidCommandError(f"duration_minutes must be at most 1440, got {duration}")
+    day_start = datetime.combine(day, time(hour=_WORKDAY_START_HOUR), tzinfo=UTC)
+    day_end = datetime.combine(day, time(hour=_WORKDAY_END_HOUR), tzinfo=UTC)
     busy: list[tuple[datetime, datetime]] = []
     for item in [*state.setdefault("events", []), *state.setdefault("focus_blocks", [])]:
         if item.get("status") == "declined":

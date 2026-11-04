@@ -162,3 +162,21 @@ def test_get_free_slots_honors_duration_and_validates_date() -> None:
         get("get_free_slots").handler(state, {"date": "10-11-2026"})
     with pytest.raises(InvalidCommandError, match="duration_minutes"):
         get("get_free_slots").handler(state, {"date": "2026-11-10", "duration_minutes": 0})
+
+
+def test_get_free_slots_accepts_non_padded_date() -> None:
+    slots = get("get_free_slots").handler(seed_state(), {"date": "2026-1-1"})["slots"]
+    starts = [s["start"] for s in slots]
+    assert starts[0] == "2026-01-01T09:00:00+00:00"
+    assert starts[-1] == "2026-01-01T16:00:00+00:00"
+    assert len(slots) == 15
+    for slot in slots:
+        assert slot["start"].endswith("+00:00")
+        assert slot["end"].endswith("+00:00")
+
+
+def test_get_free_slots_rejects_huge_duration() -> None:
+    with pytest.raises(InvalidCommandError, match="duration_minutes"):
+        get("get_free_slots").handler(
+            seed_state(), {"date": "2026-11-10", "duration_minutes": 6_000_000_000}
+        )
