@@ -80,7 +80,7 @@ def _post_comment(state: dict[str, Any], params: dict[str, Any]) -> dict[str, An
     if not isinstance(body, str) or not body:
         raise InvalidCommandError(f"body must be a non-empty string, got {body!r}")
     entity = _find_commentable(state, params["number"])
-    comment = {"author": params.get("author", "agent"), "body": body}
+    comment = {"author": "agent", "body": body}
     entity.setdefault("comments", []).append(comment)
     return {"ok": True, "comment": comment}
 

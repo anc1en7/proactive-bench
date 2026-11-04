@@ -87,7 +87,7 @@ def _send_message(state: dict[str, Any], params: dict[str, Any]) -> dict[str, An
     messages = channel.setdefault("messages", [])
     message = {
         "id": next_id(messages, "m"),
-        "author": params.get("author", "agent"),
+        "author": "agent",
         "text": text,
         "pinned": False,
     }
