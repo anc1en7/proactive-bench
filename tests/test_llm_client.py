@@ -13,6 +13,7 @@ from proactive_bench.llm.client import (
     LLMConfigError,
     LLMSettings,
     OpenAICompatClient,
+    RateLimitError,
     settings_from_env,
 )
 
@@ -37,6 +38,13 @@ def make_client(
 
 def ok_reply(content: str = "ok") -> httpx.Response:
     return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
+
+
+def always(status: int, **kwargs: Any) -> Callable[[httpx.Request], httpx.Response]:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, **kwargs)
+
+    return handler
 
 
 # --- Task 1: settings & env loading ---------------------------------------
@@ -132,3 +140,68 @@ def test_context_manager() -> None:
 
     with make_client(handler) as client:
         assert client.chat([{"role": "user", "content": "hi"}]) == "ok"
+
+
+# --- Task 3: retry policy --------------------------------------------------
+
+
+def test_chat_retries_429_then_success() -> None:
+    attempts: list[int] = []
+    sleeps: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(1)
+        if len(attempts) < 3:
+            return httpx.Response(429, headers={"Retry-After": "0"})
+        return ok_reply("finally")
+
+    client = make_client(handler, sleep=sleeps.append)
+    assert client.chat([{"role": "user", "content": "hi"}]) == "finally"
+    assert len(attempts) == 3
+    assert len(sleeps) == 2
+    assert all(delay >= 0 for delay in sleeps)
+
+
+def test_chat_retries_5xx_with_exponential_backoff() -> None:
+    attempts: list[int] = []
+    sleeps: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(1)
+        if len(attempts) == 1:
+            return httpx.Response(503)
+        return ok_reply()
+
+    client = make_client(handler, sleep=sleeps.append, backoff_base=1.0)
+    assert client.chat([{"role": "user", "content": "hi"}]) == "ok"
+    assert sleeps == [1.0]
+
+
+def test_chat_rate_limit_exhaustion_raises() -> None:
+    sleeps: list[float] = []
+    client = make_client(always(429, headers={"Retry-After": "7"}), sleep=sleeps.append)
+    with pytest.raises(RateLimitError) as exc:
+        client.chat([{"role": "user", "content": "hi"}])
+    assert exc.value.retry_after == 7.0
+    assert len(sleeps) == 4  # DEFAULT_MAX_RETRIES
+
+
+def test_chat_4xx_does_not_retry() -> None:
+    attempts: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(1)
+        return httpx.Response(400, json={"error": "bad request"})
+
+    client = make_client(handler)
+    with pytest.raises(httpx.HTTPStatusError):
+        client.chat([{"role": "user", "content": "hi"}])
+    assert len(attempts) == 1
+
+
+def test_chat_respects_max_retries_override() -> None:
+    sleeps: list[float] = []
+    client = make_client(always(500), sleep=sleeps.append, max_retries=1, backoff_base=1.0)
+    with pytest.raises(httpx.HTTPStatusError):
+        client.chat([{"role": "user", "content": "hi"}])
+    assert len(sleeps) == 1

@@ -89,6 +89,41 @@ def settings_from_env() -> LLMSettings:
     )
 
 
+def _parse_retry_after(response: httpx.Response) -> float:
+    """Best-effort seconds-to-wait from a 429 (header or JSON body), capped at 60s."""
+    header = response.headers.get("retry-after", "")
+    try:
+        return min(_MAX_DELAY, max(0.0, float(header)))
+    except ValueError:
+        pass
+    try:
+        data = response.json()
+    except ValueError:
+        return _MAX_DELAY
+    if isinstance(data, dict):
+        for key in ("reset_seconds", "retry_after_seconds"):
+            value = data.get(key)
+            if isinstance(value, int | float):
+                return min(_MAX_DELAY, max(0.0, float(value)))
+        retry_after = data.get("retry_after")
+        if isinstance(retry_after, str):
+            try:
+                from datetime import UTC, datetime
+
+                target = datetime.fromisoformat(retry_after.replace("Z", "+00:00"))
+                elapsed = (target - datetime.now(UTC)).total_seconds()
+                return min(_MAX_DELAY, max(0.0, elapsed))
+            except ValueError:
+                pass
+    return _MAX_DELAY
+
+
+def _retry_delay(response: httpx.Response, attempt: int, backoff_base: float) -> float:
+    if response.status_code == 429:
+        return _parse_retry_after(response)
+    return min(_MAX_DELAY, backoff_base * (2**attempt))
+
+
 class OpenAICompatClient:
     """Minimal chat-completions client for an OpenAI-compatible endpoint."""
 
@@ -132,10 +167,24 @@ class OpenAICompatClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        response = self._client.post("/chat/completions", json=body)
-        response.raise_for_status()
-        payload: dict[str, Any] = response.json()
-        return str(payload["choices"][0]["message"]["content"])
+        retries = 0
+        while True:
+            response = self._client.post("/chat/completions", json=body)
+            if response.status_code == 429:
+                if retries >= self.max_retries:
+                    raise RateLimitError(
+                        f"rate limited after {retries} retries: {response.text[:120]}",
+                        retry_after=_parse_retry_after(response),
+                    )
+            elif response.status_code >= 500:
+                if retries >= self.max_retries:
+                    response.raise_for_status()
+            else:
+                response.raise_for_status()
+                payload: dict[str, Any] = response.json()
+                return str(payload["choices"][0]["message"]["content"])
+            self._sleep(_retry_delay(response, retries, self.backoff_base))
+            retries += 1
 
     def close(self) -> None:
         self._client.close()
