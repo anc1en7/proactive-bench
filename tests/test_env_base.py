@@ -80,12 +80,19 @@ def test_next_id_skips_non_matching_prefix() -> None:
     assert next_id(items, "e") == "e3"
 
 
+def test_next_id_with_empty_prefix() -> None:
+    items = [{"id": "1"}, {"id": "4"}, {"id": "x"}]
+    assert next_id(items, "") == "5"
+
+
 def test_as_int_accepts_int_and_digit_string() -> None:
     assert as_int(7, "number") == 7
     assert as_int("7", "number") == 7
+    assert as_int("-7", "number") == -7
+    assert as_int(" 7 ", "number") == 7
 
 
 def test_as_int_rejects_garbage() -> None:
-    for bad in (None, 1.5, True, "abc", [1]):
+    for bad in (None, 1.5, True, "abc", [1], "--7", "²"):
         with pytest.raises(InvalidCommandError):
             as_int(bad, "number")

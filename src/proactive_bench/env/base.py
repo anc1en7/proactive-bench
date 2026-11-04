@@ -77,6 +77,8 @@ def as_int(value: Any, name: str) -> int:
         raise InvalidCommandError(f"{name} must be an integer, got {value!r}")
     if isinstance(value, int):
         return value
-    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
-        return int(value)
+    if isinstance(value, str):
+        s = value.strip()
+        if s.removeprefix("-").isdecimal():
+            return int(s)
     raise InvalidCommandError(f"{name} must be an integer, got {value!r}")
