@@ -1503,7 +1503,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'proactive_bench.env.c
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import Any
 
 from proactive_bench.env.base import (
