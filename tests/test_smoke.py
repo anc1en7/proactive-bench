@@ -45,3 +45,28 @@ def test_llm_public_api() -> None:
         "parse_json_text",
     ):
         assert hasattr(llm, name), name
+
+
+def test_env_public_api() -> None:
+    from proactive_bench import env
+
+    for name in (
+        "APPS",
+        "ActionLevel",
+        "Command",
+        "InvalidCommandError",
+        "MissingParameterError",
+        "ToolError",
+        "ToolExecutionError",
+        "ToolKindError",
+        "ToolSpec",
+        "UnknownAppError",
+        "UnknownToolError",
+        "Workspace",
+        "all_tools",
+        "classify_action_level",
+        "get_tool",
+        "parse_command",
+        "require_kind",
+    ):
+        assert hasattr(env, name), name

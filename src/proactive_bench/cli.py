@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     print(
         f"command {args.command!r} is not implemented yet "
-        f"(see SPEC.md phases; currently Phase 1).",
+        f"(see SPEC.md phases; currently Phase 2).",
         file=sys.stderr,
     )
     return 2
