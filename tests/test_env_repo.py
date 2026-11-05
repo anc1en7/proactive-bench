@@ -114,6 +114,20 @@ def test_open_draft_pr_assigns_next_number() -> None:
     assert state["prs"][-1]["title"] == "new"
 
 
+def test_repo_tolerates_string_state_numbers() -> None:
+    state = {
+        "prs": [base_pr(number="1")],
+        "issues": [
+            {"number": "5", "title": "bug", "state": "open", "labels": [], "comments": []}
+        ],
+    }
+    assert get("get_pr").handler(state, {"number": 1})["pr"]["title"] == "fix thing"
+    assert get("get_checks").handler(state, {"number": 1})["checks"][0]["status"] == "pass"
+    assert get("get_issue").handler(state, {"number": 5})["issue"]["title"] == "bug"
+    result = get("open_draft_pr").handler(state, {"title": "new", "branch": "feat-y"})
+    assert result["pr"]["number"] == 2
+
+
 def test_merge_pr_blocked_by_non_passing_checks() -> None:
     state = {"prs": [base_pr(checks=[{"name": "ci", "status": "fail"}])]}
     with pytest.raises(ToolExecutionError, match="failing or pending"):

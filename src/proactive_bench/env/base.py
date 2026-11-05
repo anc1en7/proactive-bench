@@ -66,7 +66,7 @@ def next_id(items: list[dict[str, Any]], prefix: str) -> str:
     highest = 0
     for item in items:
         raw = str(item.get("id", ""))
-        if raw.startswith(prefix) and raw[len(prefix) :].isdigit():
+        if raw.startswith(prefix) and raw[len(prefix) :].isdecimal():
             highest = max(highest, int(raw[len(prefix) :]))
     return f"{prefix}{highest + 1}"
 

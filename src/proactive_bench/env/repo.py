@@ -19,7 +19,7 @@ def initial_state() -> dict[str, Any]:
 def _find_pr(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for pr in state.setdefault("prs", []):
-        if pr.get("number") == wanted:
+        if as_int(pr.get("number", 0), "number") == wanted:
             return pr
     raise ToolExecutionError(f"no PR with number {wanted}")
 
@@ -27,7 +27,7 @@ def _find_pr(state: dict[str, Any], number: Any) -> dict[str, Any]:
 def _find_issue(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for issue in state.setdefault("issues", []):
-        if issue.get("number") == wanted:
+        if as_int(issue.get("number", 0), "number") == wanted:
             return issue
     raise ToolExecutionError(f"no issue with number {wanted}")
 
@@ -44,7 +44,7 @@ def _find_commit(state: dict[str, Any], sha: Any) -> dict[str, Any]:
 def _find_commentable(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for entity in [*state.setdefault("prs", []), *state.setdefault("issues", [])]:
-        if entity.get("number") == wanted:
+        if as_int(entity.get("number", 0), "number") == wanted:
             return entity
     raise ToolExecutionError(f"no PR or issue with number {wanted}")
 
@@ -110,7 +110,7 @@ def _open_draft_pr(state: dict[str, Any], params: dict[str, Any]) -> dict[str, A
         if not isinstance(value, str) or not value:
             raise InvalidCommandError(f"{key} must be a non-empty string, got {value!r}")
     prs = state.setdefault("prs", [])
-    number = max((pr.get("number", 0) for pr in prs), default=0) + 1
+    number = max((as_int(pr.get("number", 0), "number") for pr in prs), default=0) + 1
     pr = {
         "number": number,
         "title": title,

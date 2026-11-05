@@ -85,6 +85,10 @@ def test_next_id_with_empty_prefix() -> None:
     assert next_id(items, "") == "5"
 
 
+def test_next_id_ignores_unicode_superscript_suffix() -> None:
+    assert next_id([{"id": "m²"}], "m") == "m1"
+
+
 def test_as_int_accepts_int_and_digit_string() -> None:
     assert as_int(7, "number") == 7
     assert as_int("7", "number") == 7
