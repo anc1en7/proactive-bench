@@ -25,6 +25,9 @@ results/
 # Agent execution workspace (superpowers SDD ledger/briefs)
 .superpowers/
 
+# Local agent instructions (never commit)
+AGENTS.md
+
 # Editors / OS
 .vscode/
 .idea/
