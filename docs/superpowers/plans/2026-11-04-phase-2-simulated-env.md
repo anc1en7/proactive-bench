@@ -147,6 +147,10 @@ def test_next_id_with_empty_prefix() -> None:
     assert next_id(items, "") == "5"
 
 
+def test_next_id_ignores_unicode_superscript_suffix() -> None:
+    assert next_id([{"id": "m²"}], "m") == "m1"
+
+
 def test_as_int_accepts_int_and_digit_string() -> None:
     assert as_int(7, "number") == 7
     assert as_int("7", "number") == 7
@@ -236,7 +240,7 @@ def next_id(items: list[dict[str, Any]], prefix: str) -> str:
     highest = 0
     for item in items:
         raw = str(item.get("id", ""))
-        if raw.startswith(prefix) and raw[len(prefix) :].isdigit():
+        if raw.startswith(prefix) and raw[len(prefix) :].isdecimal():
             highest = max(highest, int(raw[len(prefix) :]))
     return f"{prefix}{highest + 1}"
 
@@ -406,6 +410,20 @@ def test_open_draft_pr_assigns_next_number() -> None:
     assert state["prs"][-1]["title"] == "new"
 
 
+def test_repo_tolerates_string_state_numbers() -> None:
+    state = {
+        "prs": [base_pr(number="1")],
+        "issues": [
+            {"number": "5", "title": "bug", "state": "open", "labels": [], "comments": []}
+        ],
+    }
+    assert get("get_pr").handler(state, {"number": 1})["pr"]["title"] == "fix thing"
+    assert get("get_checks").handler(state, {"number": 1})["checks"][0]["status"] == "pass"
+    assert get("get_issue").handler(state, {"number": 5})["issue"]["title"] == "bug"
+    result = get("open_draft_pr").handler(state, {"title": "new", "branch": "feat-y"})
+    assert result["pr"]["number"] == 2
+
+
 def test_merge_pr_blocked_by_non_passing_checks() -> None:
     state = {"prs": [base_pr(checks=[{"name": "ci", "status": "fail"}])]}
     with pytest.raises(ToolExecutionError, match="failing or pending"):
@@ -482,7 +500,7 @@ def initial_state() -> dict[str, Any]:
 def _find_pr(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for pr in state.setdefault("prs", []):
-        if pr.get("number") == wanted:
+        if as_int(pr.get("number", 0), "number") == wanted:
             return pr
     raise ToolExecutionError(f"no PR with number {wanted}")
 
@@ -490,7 +508,7 @@ def _find_pr(state: dict[str, Any], number: Any) -> dict[str, Any]:
 def _find_issue(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for issue in state.setdefault("issues", []):
-        if issue.get("number") == wanted:
+        if as_int(issue.get("number", 0), "number") == wanted:
             return issue
     raise ToolExecutionError(f"no issue with number {wanted}")
 
@@ -507,7 +525,7 @@ def _find_commit(state: dict[str, Any], sha: Any) -> dict[str, Any]:
 def _find_commentable(state: dict[str, Any], number: Any) -> dict[str, Any]:
     wanted = as_int(number, "number")
     for entity in [*state.setdefault("prs", []), *state.setdefault("issues", [])]:
-        if entity.get("number") == wanted:
+        if as_int(entity.get("number", 0), "number") == wanted:
             return entity
     raise ToolExecutionError(f"no PR or issue with number {wanted}")
 
@@ -573,7 +591,7 @@ def _open_draft_pr(state: dict[str, Any], params: dict[str, Any]) -> dict[str, A
         if not isinstance(value, str) or not value:
             raise InvalidCommandError(f"{key} must be a non-empty string, got {value!r}")
     prs = state.setdefault("prs", [])
-    number = max((pr.get("number", 0) for pr in prs), default=0) + 1
+    number = max((as_int(pr.get("number", 0), "number") for pr in prs), default=0) + 1
     pr = {
         "number": number,
         "title": title,
@@ -1489,6 +1507,24 @@ def test_get_free_slots_honors_duration_and_validates_date() -> None:
         get("get_free_slots").handler(state, {"date": "10-11-2026"})
     with pytest.raises(InvalidCommandError, match="duration_minutes"):
         get("get_free_slots").handler(state, {"date": "2026-11-10", "duration_minutes": 0})
+
+
+def test_get_free_slots_accepts_non_padded_date() -> None:
+    slots = get("get_free_slots").handler(seed_state(), {"date": "2026-1-1"})["slots"]
+    starts = [s["start"] for s in slots]
+    assert starts[0] == "2026-01-01T09:00:00+00:00"
+    assert starts[-1] == "2026-01-01T16:00:00+00:00"
+    assert len(slots) == 15
+    for slot in slots:
+        assert slot["start"].endswith("+00:00")
+        assert slot["end"].endswith("+00:00")
+
+
+def test_get_free_slots_rejects_huge_duration() -> None:
+    with pytest.raises(InvalidCommandError, match="duration_minutes"):
+        get("get_free_slots").handler(
+            seed_state(), {"date": "2026-11-10", "duration_minutes": 6_000_000_000}
+        )
 ```
 
 - [ ] **Step: Run test to verify it fails**
