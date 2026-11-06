@@ -1,0 +1,77 @@
+{
+  "id": "sre-latency-page-01",
+  "workspace": "sre",
+  "need_type": "blockage",
+  "persona": { "name": "Alex Rivera", "role": "site reliability engineer", "team": "edge" },
+  "apps": {
+    "repo": {
+      "prs": [],
+      "issues": [],
+      "commits": []
+    },
+    "chat": {
+      "channels": [
+        {
+          "name": "sre-oncall",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "alex",
+              "text": "p99 latency on edge-gateway is 2.4s, SLO is 800ms",
+              "pinned": false
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [
+        {
+          "id": "a1",
+          "severity": "sev2",
+          "service": "edge-gateway",
+          "status": "firing",
+          "summary": "p99 latency 2.4s (SLO 800ms)"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "rb-latency",
+          "title": "Edge latency triage",
+          "steps": ["check recent deploys", "check upstream error rate", "page primary if customer impact"]
+        }
+      ],
+      "deploy_windows": [
+        {
+          "id": "dw1",
+          "start": "2026-11-12T14:00:00Z",
+          "end": "2026-11-12T16:00:00Z",
+          "frozen": false
+        }
+      ],
+      "rollback_plans": [],
+      "oncall": { "primary": "alex", "paged": false, "page_log": [] }
+    },
+    "cal": {
+      "events": [],
+      "focus_blocks": []
+    }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-12T14:10:00Z",
+      "app": "pager",
+      "function": "get_alert",
+      "parameter": { "id": "a1" }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-12T14:11:00Z",
+      "app": "pager",
+      "function": "get_runbook",
+      "parameter": { "id": "rb-latency" }
+    }
+  ],
+  "notes": "Blockage: sev2 firing mid-deploy-window; ack/page/rollback are the judgment ladder."
+}

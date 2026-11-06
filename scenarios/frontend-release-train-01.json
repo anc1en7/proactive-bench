@@ -1,0 +1,89 @@
+{
+  "id": "frontend-release-train-01",
+  "workspace": "frontend",
+  "need_type": "risk",
+  "persona": { "name": "Morgan Blake", "role": "frontend engineer", "team": "web-ui" },
+  "apps": {
+    "repo": {
+      "prs": [
+        {
+          "number": 201,
+          "title": "checkout modal focus trap",
+          "branch": "fix-modal-focus",
+          "base": "main",
+          "draft": false,
+          "status": "open",
+          "checks": [
+            { "name": "ci", "status": "pass" },
+            { "name": "a11y", "status": "pending" }
+          ],
+          "reviewers": ["morgan"],
+          "comments": [],
+          "author": "taylor"
+        }
+      ],
+      "issues": [
+        {
+          "number": 130,
+          "title": "Regression: modal steals focus from address bar (Safari)",
+          "state": "open",
+          "labels": ["bug", "a11y"],
+          "comments": []
+        }
+      ],
+      "commits": []
+    },
+    "chat": {
+      "channels": [
+        {
+          "name": "web-ui",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "taylor",
+              "text": "a11y check still pending on #201, train boards Thursday 12:00 UTC",
+              "pinned": false
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [],
+      "runbooks": [],
+      "deploy_windows": [],
+      "rollback_plans": [],
+      "oncall": { "primary": null, "paged": false, "page_log": [] }
+    },
+    "cal": {
+      "events": [
+        {
+          "id": "e1",
+          "title": "Release train boards",
+          "start": "2026-11-19T12:00:00+00:00",
+          "end": "2026-11-19T13:00:00+00:00",
+          "attendees": [],
+          "status": "confirmed"
+        }
+      ],
+      "focus_blocks": []
+    }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-17T11:00:00Z",
+      "app": "repo",
+      "function": "get_checks",
+      "parameter": { "number": 201 }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-17T11:03:00Z",
+      "app": "chat",
+      "function": "search_messages",
+      "parameter": { "query": "train" }
+    }
+  ],
+  "notes": "Risk: a11y pending + known Safari regression; shipping without green a11y likely regresses #130."
+}
