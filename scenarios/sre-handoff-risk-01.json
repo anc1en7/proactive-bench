@@ -1,0 +1,70 @@
+{
+  "id": "sre-handoff-risk-01",
+  "workspace": "sre",
+  "need_type": "risk",
+  "persona": { "name": "Alex Rivera", "role": "site reliability engineer", "team": "edge" },
+  "apps": {
+    "repo": { "prs": [], "issues": [], "commits": [] },
+    "chat": {
+      "channels": [
+        {
+          "name": "sre-oncall",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "casey",
+              "text": "handing off in 30m — edge-gateway still firing a1, I have not acked yet",
+              "pinned": false
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [
+        {
+          "id": "a1",
+          "severity": "sev3",
+          "service": "edge-gateway",
+          "status": "firing",
+          "summary": "elevated 5xx during handoff"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "rb-handoff",
+          "title": "On-call handoff checklist",
+          "steps": ["ack open alerts", "page_log notes", "freeze-window check"]
+        }
+      ],
+      "deploy_windows": [
+        {
+          "id": "dw1",
+          "start": "2026-11-15T20:00:00Z",
+          "end": "2026-11-15T22:00:00Z",
+          "frozen": true
+        }
+      ],
+      "rollback_plans": [],
+      "oncall": { "primary": "casey", "paged": false, "page_log": [] }
+    },
+    "cal": { "events": [], "focus_blocks": [] }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-15T19:30:00Z",
+      "app": "chat",
+      "function": "get_thread",
+      "parameter": { "channel": "sre-oncall", "message_id": "m1" }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-15T19:31:00Z",
+      "app": "pager",
+      "function": "get_alert",
+      "parameter": { "id": "a1" }
+    }
+  ],
+  "notes": "Risk: unacked sev3 at handoff during frozen deploy window; ack/page vs assume next shift sees it."
+}

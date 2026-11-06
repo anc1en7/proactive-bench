@@ -1,0 +1,77 @@
+{
+  "id": "platform-fleet-block-01",
+  "workspace": "platform",
+  "need_type": "dependency",
+  "persona": { "name": "Riley Chen", "role": "platform engineer", "team": "build-fleet" },
+  "apps": {
+    "repo": {
+      "prs": [
+        {
+          "number": 80,
+          "title": "roll out runner image 2026.11",
+          "branch": "chore-runner-2026-11",
+          "base": "main",
+          "draft": false,
+          "status": "open",
+          "checks": [
+            { "name": "ci", "status": "pending" },
+            { "name": "fleet-canary", "status": "fail" }
+          ],
+          "reviewers": ["riley"],
+          "comments": [],
+          "author": "ci-bot"
+        }
+      ],
+      "issues": [
+        {
+          "number": 410,
+          "title": "Canary runners OOM on arm64 large",
+          "state": "open",
+          "labels": ["infra"],
+          "comments": []
+        }
+      ],
+      "commits": []
+    },
+    "chat": {
+      "channels": [
+        {
+          "name": "build-fleet",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "ci-bot",
+              "text": "fleet-canary failed on #80 — waiting on arm64 memory fix from cloud team",
+              "pinned": false
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [],
+      "runbooks": [],
+      "deploy_windows": [],
+      "rollback_plans": [],
+      "oncall": { "primary": null, "paged": false, "page_log": [] }
+    },
+    "cal": { "events": [], "focus_blocks": [] }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-16T08:00:00Z",
+      "app": "repo",
+      "function": "get_checks",
+      "parameter": { "number": 80 }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-16T08:02:00Z",
+      "app": "chat",
+      "function": "get_thread",
+      "parameter": { "channel": "build-fleet", "message_id": "m1" }
+    }
+  ],
+  "notes": "Dependency: external cloud-team fix gates canary; comment/track vs force-merge red canary."
+}

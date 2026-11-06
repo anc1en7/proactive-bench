@@ -1,0 +1,73 @@
+{
+  "id": "backend-dep-stale-01",
+  "workspace": "backend",
+  "need_type": "dependency",
+  "persona": { "name": "Sam Okonkwo", "role": "backend engineer", "team": "payments" },
+  "apps": {
+    "repo": {
+      "prs": [
+        {
+          "number": 150,
+          "title": "use new fraud-sdk batch API",
+          "branch": "feat-fraud-batch",
+          "base": "main",
+          "draft": false,
+          "status": "open",
+          "checks": [{ "name": "ci", "status": "pass" }],
+          "reviewers": ["eda"],
+          "comments": [],
+          "author": "sam"
+        }
+      ],
+      "issues": [],
+      "commits": []
+    },
+    "chat": {
+      "channels": [
+        {
+          "name": "payments-eng",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "eda",
+              "text": "fraud-sdk batch API docs PR is still open on their side, ETA unknown",
+              "pinned": false
+            },
+            {
+              "id": "m2",
+              "author": "sam",
+              "text": "so #150 stays blocked until they land docs?",
+              "pinned": false,
+              "thread_id": "m1"
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [],
+      "runbooks": [],
+      "deploy_windows": [],
+      "rollback_plans": [],
+      "oncall": { "primary": null, "paged": false, "page_log": [] }
+    },
+    "cal": { "events": [], "focus_blocks": [] }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-14T13:00:00Z",
+      "app": "chat",
+      "function": "get_thread",
+      "parameter": { "channel": "payments-eng", "message_id": "m1" }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-14T13:02:00Z",
+      "app": "repo",
+      "function": "get_pr",
+      "parameter": { "number": 150 }
+    }
+  ],
+  "notes": "Dependency: external team docs gate the PR; comment/ask vs silent wait."
+}

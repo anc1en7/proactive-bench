@@ -1,0 +1,78 @@
+{
+  "id": "lead-standup-opp-01",
+  "workspace": "lead",
+  "need_type": "opportunity",
+  "persona": { "name": "Jordan Lee", "role": "tech lead", "team": "platform-experience" },
+  "apps": {
+    "repo": {
+      "prs": [
+        {
+          "number": 58,
+          "title": "flaky canary metric filter",
+          "branch": "fix-canary-filter",
+          "base": "main",
+          "draft": false,
+          "status": "open",
+          "checks": [{ "name": "ci", "status": "pass" }],
+          "reviewers": [],
+          "comments": [],
+          "author": "noor"
+        }
+      ],
+      "issues": [],
+      "commits": []
+    },
+    "chat": {
+      "channels": [
+        {
+          "name": "team-lead",
+          "messages": [
+            {
+              "id": "m1",
+              "author": "noor",
+              "text": "#58 is green and unreviewed — can we get eyes before standup?",
+              "pinned": false
+            }
+          ]
+        }
+      ]
+    },
+    "pager": {
+      "alerts": [],
+      "runbooks": [],
+      "deploy_windows": [],
+      "rollback_plans": [],
+      "oncall": { "primary": null, "paged": false, "page_log": [] }
+    },
+    "cal": {
+      "events": [
+        {
+          "id": "e1",
+          "title": "Team standup",
+          "start": "2026-11-17T09:30:00+00:00",
+          "end": "2026-11-17T09:45:00+00:00",
+          "attendees": ["jordan", "noor", "kai"],
+          "status": "confirmed"
+        }
+      ],
+      "focus_blocks": []
+    }
+  },
+  "events": [
+    {
+      "event_id": "e1",
+      "time": "2026-11-17T09:00:00Z",
+      "app": "chat",
+      "function": "get_thread",
+      "parameter": { "channel": "team-lead", "message_id": "m1" }
+    },
+    {
+      "event_id": "e2",
+      "time": "2026-11-17T09:01:00Z",
+      "app": "repo",
+      "function": "get_pr",
+      "parameter": { "number": 58 }
+    }
+  ],
+  "notes": "Opportunity: green unreviewed PR + standup in 30m — request_review now vs discuss later."
+}

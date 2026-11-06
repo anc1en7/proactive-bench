@@ -1,18 +1,17 @@
 # scenarios/
 
-Workspace fixtures and scenario JSON files live here (Phase 3).
+Self-contained scenario JSON files (SPEC §3.5). Validated by
+`proactive-bench validate` (schema, allowlisted events, unique ids).
 
-Layout (planned):
+Layout:
 
 ```
 scenarios/
-├── workspaces/
-│   ├── backend/
-│   ├── sre/
-│   ├── lead/
-│   ├── frontend/
-│   └── platform/
-└── <scenario-id>.json
+├── README.md
+└── <scenario-id>.json    # id must match filename stem
 ```
 
-Run `proactive-bench validate` once Phase 3 lands.
+Workspaces: backend · sre · lead · frontend · platform
+Need types: dependency · blockage · risk · opportunity
+
+Phase 3 ships ≥10 scenarios; grow toward ~30 with the same schema.
