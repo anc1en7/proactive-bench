@@ -40,7 +40,7 @@ def load_scenario_file(path: Path) -> ScenarioFile:
     source = path.name
     try:
         raw = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         return ScenarioFile(
             path=path,
             data={},

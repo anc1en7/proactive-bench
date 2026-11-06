@@ -65,6 +65,14 @@ def test_load_scenario_file_non_object_json(tmp_path: Path) -> None:
     assert "object" in loaded.errors[0].message
 
 
+def test_load_scenario_file_bad_encoding(tmp_path: Path) -> None:
+    path = tmp_path / "utf16.json"
+    path.write_bytes("id".encode("utf-16"))
+    loaded = load_scenario_file(path)
+    assert len(loaded.errors) == 1
+    assert "cannot read file" in loaded.errors[0].message
+
+
 def test_validate_directory_ok(tmp_path: Path) -> None:
     write_scenario(tmp_path, "backend-alpha-01")
     write_scenario(tmp_path, "backend-beta-02", workspace="backend", need_type="risk")
